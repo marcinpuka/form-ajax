@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Get Users - Test</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.onload = function () {
+            document.getElementById("newUserForm").addEventListener('submit', function(event){
+                event.preventDefault();
+                validate();
+            });
+            getUpdate();
+            return getUsers();
+        }
+
+        function validate(){
+
+            var errors = new Array();
+
+            if (document.forms[0].firstname.value == ""){
+                errors.push("Please provide your fisrst name!\n");
+            }
+
+            if (document.forms[0].lastname.value == ""){
+                errors.push("Please provide your last name!\n");
+            }
+
+            if (document.forms[0].email.value == ""){
+                errors.push("Please provide your email!\n");
+            }
+
+            var gender = validateGender();
+            if (!gender){
+                errors.push("Please provide your gender!\n");
+            }
+
+            if (errors.length == 0){
+                submitUser();
+                return true;
+            } else {
+                clearErrors();
+                displayErrors(errors);
+                return false;
+            }
+        }
+
+        function validateGender () {
+            var options = document.getElementById("gender-list").options;
+            var result = false;
+            for (var i = 0; i < options.length; i++) {
+                if (document.getElementById("gender").value == options[i].value) {
+                    result = true;
+                }
+            }
+            return result;
+        }
+
+        function displayErrors (errors){
+            var div = document.getElementById("errors");
+            for (var i=0; i<errors.length; i++){
+                var error = document.createTextNode(errors[i]);
+                var p = document.createElement("p");
+                p.appendChild(error);
+                div.appendChild(p);
+            }
+        }
+
+        function clearErrors(){
+            var div = document.getElementById("errors");
+            while(div.hasChildNodes()){
+                div.removeChild(div.firstChild);
+            }
+        }
+
+        function getUpdate(){
+            setInterval(getUsers, 3000);
+        }
+
+        function submitUser(){
+            // get data from the form
+            var firstname = document.getElementById("firstname").value;
+            var lastname = document.getElementById("lastname").value;
+            var email = document.getElementById("email").value;
+            var gender = document.getElementById("gender").value;
+            // create js object
+            var user = {firstname: firstname, lastname: lastname, email: email, gender: gender};
+            // create json string
+            var jsonData = JSON.stringify(user);
+            // ajax
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("POST", "submit.php", true);
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xmlhttp.send("user="+jsonData);
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    document.getElementById("newUserForm").reset();
+                }
+            }
+        }
+
+
+        function getUsers(){
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "test.php", true);
+            xhr.send();
+            xhr.onreadystatechange = function (){
+                if(xhr.readyState == 4 && xhr.status == 200){
+                    var output = "";
+                    var jsonData = xhr.responseText;
+                    var jsObject = JSON.parse(jsonData);
+
+                    if (jsObject.length > 0) {
+                        output+= "<h2>List of users: </h2>"
+                        output+= "<table><tr><th>Firstname</th><th>Lastname</th><th>Email</th><th>Gender</th></tr>"
+                        for (var i = 0; i < jsObject.length; i++) {
+                            output += "<tr>";
+                            output += "<td>" + jsObject[i][0] + "</td>";
+                            output += "<td>" + jsObject[i][1] + "</td>";
+                            output += "<td>" + jsObject[i][2] + "</td>";
+                            output += "<td>" + jsObject[i][3] + "</td>";
+                            output += "</tr>"
+                        }
+                    } else {
+                        output += "<p>The are no users in database now!</p>"
+                    }
+                    document.getElementById("show").innerHTML = output;
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+<h1>Users Registration with Ajax</h1>
+<div id="errors"></div>
+<form id="newUserForm">
+    <fieldset>
+        <legend>Personal information:</legend>
+        <label for="firstname">First Name:</label><br>
+        <input type="text" id="firstname"><br>
+        <label for="lastname">Last Name:</label><br>
+        <input type="text" id="lastname"><br>
+        <label for="email">Email:</label><br>
+        <input type="email" id="email"><br>
+        <label for="gender">Gender: </label><br>
+        <input list="gender-list" id="gender"><br>
+        <datalist id="gender-list">
+            <option value="Male">
+            <option value="Female">
+        </datalist><br><br>
+    <input id="submitForm" type="submit" value="Submit">
+    </fieldset>
+</form>
+<div id="show"></div>
+</body>
+</html>
